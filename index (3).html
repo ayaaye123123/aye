@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="description" content="安全访问页面">
+  <!-- 增强CSP策略防止XSS误报 -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://res.wx.qq.com; style-src 'self' 'unsafe-inline'; img-src * data:; font-src 'self' data:; connect-src https://sq.zykj.knxn.cn https://api.allorigins.win https://corsproxy.io https://thingproxy.freeboard.io; frame-src 'self' blob: https:">
+  
+  <title>众耀天下</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Helvetica, Arial, sans-serif;
+      background-color: #EDEDED;
+      color: #333;
+      overflow: hidden;
+      line-height: 1.5;
+    }
+    :root {
+      --wechat-green: #07C160;
+      --wechat-light-green: #d7f0e3;
+      --text-dark: #333;
+      --text-gray: #999;
+      --bg-white: #fff;
+      --border-color: #e5e5e5;
+    }
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 0 15px;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    .loading-container {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1000;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background-color: rgba(255,255,255,0.95);
+      flex-direction: column;
+    }
+    .loading-dots {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 15px;
+    }
+    .loading-dot {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      animation: dot-bounce 1.4s infinite ease-in-out both;
+    }
+    .dot-1 { background-color: var(--wechat-green); animation-delay: -0.32s; }
+    .dot-2 { background-color: #1AAD19; animation-delay: -0.16s; }
+    .dot-3 { background-color: #10AEFF; }
+    @keyframes dot-bounce {
+      0%, 80%, 100% { transform: scale(0); }
+      40% { transform: scale(1); }
+    }
+    .loading-text {
+      margin-bottom: 20px;
+      font-size: 16px;
+      color: var(--text-dark);
+    }
+    .btn {
+      display: inline-block;
+      padding: 10px 20px;
+      border-radius: 6px;
+      text-decoration: none;
+      font-weight: 500;
+      transition: all 0.3s;
+      border: none;
+      cursor: pointer;
+      font-size: 16px;
+    }
+    .btn-primary {
+      background-color: var(--wechat-green);
+      color: white;
+    }
+    .watermark {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0,0,0,0.7);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 9999;
+      backdrop-filter: blur(5px);
+    }
+    .watermark-content {
+      background: var(--bg-white);
+      padding: 25px 40px;
+      border-radius: 12px;
+      color: var(--text-dark);
+      font-size: 18px;
+      text-align: center;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+      max-width: 90%;
+      width: 100%;
+      margin: 0 20px;
+    }
+    .watermark-title {
+      font-size: 22px;
+      font-weight: 600;
+      margin-bottom: 15px;
+      color: var(--wechat-green);
+    }
+    .error-message {
+      color: #E64340;
+      font-size: 14px;
+      margin: 15px 0;
+      padding: 8px 12px;
+      background-color: rgba(230,67,64,0.1);
+      border-radius: 4px;
+      text-align: left;
+    }
+    .content-frame {
+      position: fixed;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      border: none;
+      z-index: 1;
+      background-color: white;
+      display: none;
+    }
+    
+    .btn {
+    display: inline-block;
+    padding: 12px 28px;
+    border-radius: 50px; /* 圆角更大，微信风格 */
+    text-decoration: none;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    border: none;
+    cursor: pointer;
+    font-size: 16px;
+    box-shadow: 0 4px 12px rgba(7, 193, 96, 0.3);
+    margin-top: 20px;
+  }
+  .btn-primary {
+    background-color: var(--wechat-green);
+    color: white;
+    animation: pulse 1.8s infinite; /* 呼吸动画 */
+  }
+  .btn-primary:hover {
+    background-color: #05a650;
+    box-shadow: 0 6px 16px rgba(7, 193, 96, 0.4);
+  }
+
+  /* 呼吸动画效果 */
+  @keyframes pulse {
+    0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(7,193,96,0.4); }
+    70% { transform: scale(1.05); box-shadow: 0 0 0 15px rgba(7,193,96,0); }
+    100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(7,193,96,0); }
+  }
+  </style>
+</head>
+<body>
+<div class="container">
+  <!-- 加载界面 -->
+<div class="loading-container" id="loading">
+  <div class="loading-dots">
+    <div class="loading-dot dot-1"></div>
+    <div class="loading-dot dot-2"></div>
+    <div class="loading-dot dot-3"></div>
+  </div>
+  <div class="loading-text" id="loadingText">正在加载中,请稍后...</div>
+
+  <button class="btn btn-primary" id="loadNowBtn">立即进入</button>
+</div>
+
+  <!-- 未授权水印 -->
+  <div class="watermark" id="watermark">
+    <div class="watermark-content">
+      <div class="watermark-title">温馨提示</div>
+      <div class="watermark-text">当前页面未授权</div>
+      <div class="watermark-text">请联系RS112900获取授权</div>
+      <div class="error-message" id="errorDetail"></div>
+      <button class="btn btn-primary" onclick="location.reload()">刷新验证</button>
+    </div>
+  </div>
+</div>
+
+<iframe class="content-frame" id="contentFrame" allowfullscreen></iframe>
+
+<script>
+const AUTH_API_URL = 'https://sq.zykj.knxn.cn/check.php';
+const AUTH_CHECK_DELAY = 3000;
+const SAFE_URL_PATTERN = /^https?:\/\/[\w.-]+(?:\/[\w\-./?%&=:#]*)?$/i;
+
+
+function safeBase64Decode(encoded) {
+  if (!/^[a-zA-Z0-9\/\-_=]+$/.test(encoded)) throw new Error('非法的URL参数');
+  return decodeURIComponent(escape(atob(encoded)));
+}
+// function getPathParam() {
+//   const path = window.location.pathname;
+//   const parts = path.split('/').filter(p => p);
+//   if (parts.length < 2 || parts[0] !== 'openid') throw new Error('URL格式错误');
+//   return parts[parts.length - 1];
+// }
+
+function getPathParam() {
+  const path = window.location.pathname;
+  const parts = path.split('/').filter(p => p);
+  if (parts.length < 2 || parts[0] !== 'openid') {
+    throw new Error('URL格式错误');
+  }
+  return parts.slice(1).join('/');
+}
+
+function validateUrl(url) {
+  if (!SAFE_URL_PATTERN.test(url)) throw new Error('URL不安全');
+  return url;
+}
+async function checkAuth(url) {
+  try {
+    const response = await fetch(`${AUTH_API_URL}?link=${encodeURIComponent(url)}`);
+    if (response.ok) {
+      const data = await response.json();
+      return data.code === 200;
+    }
+    return false;
+  } catch (e) {
+    console.error('授权检查失败', e);
+    return false;
+  }
+}
+function showWatermark(msg='') {
+  document.getElementById('errorDetail').textContent = msg;
+  document.getElementById('watermark').style.display = 'flex';
+}
+function hideLoading() {
+  document.getElementById('loading').style.display = 'none';
+}
+function loadContent(url) {
+  const frame = document.getElementById('contentFrame');
+  frame.style.display = 'block';
+  frame.src = url;
+  frame.onerror = () => showWatermark('内容加载失败');
+}
+async function processAuth(url, immediate=false) {
+  const isAuthorized = await checkAuth(url);
+  if (!isAuthorized) {
+    showWatermark('授权验证失败');
+    hideLoading();
+  } else {
+    hideLoading();
+    if (immediate) {
+      loadContent(url);
+    } else {
+      setTimeout(() => loadContent(url), 1000); // 自动模式再延迟1秒
+    }
+  }
+}
+async function main() {
+  try {
+    const base64Param = getPathParam();
+    let trueUrl = validateUrl(safeBase64Decode(base64Param));
+    document.getElementById('loadNowBtn').addEventListener('click', () => {
+      document.getElementById('loadingText').textContent = '正在立即加载...';
+      processAuth(trueUrl, true);
+    });
+    setTimeout(() => processAuth(trueUrl, false), AUTH_CHECK_DELAY);
+  } catch (e) {
+    showWatermark(e.message);
+    hideLoading();
+  }
+}
+document.addEventListener('DOMContentLoaded', main);
+</script>
+</body>
+</html>
